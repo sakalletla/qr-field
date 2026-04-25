@@ -17,7 +17,7 @@ export function LoginForm() {
       </p>
 
       <div className="mt-8">
-        <GoogleSignInButton label="Continue with Google" callbackUrl={callbackUrl} />
+        <GoogleSignInButton label="Continue with Google" callbackPath={callbackUrl} />
       </div>
       <p className="mt-4 text-center text-xs leading-relaxed text-on-surface-variant">
         By continuing, you agree to our{" "}

@@ -1,24 +1,36 @@
 "use client";
 
-import type { Session } from "next-auth";
-import { SessionProvider, useSession } from "next-auth/react";
-import { useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { createClient } from "@/lib/supabase/client";
 import { getCodes, seedDemoCodesIfEmpty, setProfile } from "@/lib/demo-storage";
 import { syncDynamicSlugsToServer } from "@/lib/slug-sync-client";
 
+const AppAuthContext = createContext<User | null>(null);
+
+export function useAppAuth() {
+  return useContext(AppAuthContext);
+}
+
 function ProfileSync() {
-  const { data: session, status } = useSession();
+  const user = useAppAuth();
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.email) return;
-    setProfile({ email: session.user.email });
+    if (!user?.email) return;
+    setProfile({ email: user.email });
     seedDemoCodesIfEmpty();
-  }, [session?.user?.email, status]);
+  }, [user?.email]);
 
   return null;
 }
 
-/** Push dynamic slugs to Redis whenever local storage changes (demo login seed, create, etc.). */
 function SlugSyncWatcher() {
   useEffect(() => {
     const run = () => {
@@ -34,17 +46,32 @@ function SlugSyncWatcher() {
 
 export function AppProviders({
   children,
-  session,
+  initialUser,
 }: {
-  children: React.ReactNode;
-  /** From `await auth()` in the root layout — keeps SSR and client hydration in sync. */
-  session: Session | null;
+  children: ReactNode;
+  initialUser: User | null;
 }) {
+  const [user, setUser] = useState<User | null>(initialUser);
+
+  const sync = useCallback((next: User | null) => {
+    setUser(next);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      sync(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, [sync]);
+
   return (
-    <SessionProvider session={session}>
+    <AppAuthContext.Provider value={user}>
       <ProfileSync />
       <SlugSyncWatcher />
       {children}
-    </SessionProvider>
+    </AppAuthContext.Provider>
   );
 }

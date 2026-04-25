@@ -10,8 +10,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# NextAuth needs a non-empty secret during `next build` (not used at runtime — set real secret on the container).
-ENV NEXTAUTH_SECRET=qrfield-docker-build-only-placeholder-min-32-chars
+# Public Supabase vars must exist for `next build` (use real values at container runtime for Docker app profile).
+ENV NEXT_PUBLIC_SUPABASE_URL=https://build-placeholder.local
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=build-placeholder-anon
 RUN npm run build
 
 FROM node:20-alpine AS runner

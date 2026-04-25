@@ -1,20 +1,24 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
+import { useAppAuth } from "@/components/providers/app-providers";
 import { clearDemoSessionCookie } from "@/lib/demo-session";
 import { useProfileEmailSnapshot } from "@/lib/qrfield-sync";
 
 export function SettingsView() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const user = useAppAuth();
   const storedEmail = useProfileEmailSnapshot();
-  const email = session?.user?.email ?? storedEmail;
+  const email = user?.email ?? storedEmail;
 
   async function onSignOut() {
     clearDemoSessionCookie();
-    if (session) {
-      await signOut({ callbackUrl: "/" });
+    if (user) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
     } else {
       router.push("/");
       router.refresh();
@@ -36,8 +40,8 @@ export function SettingsView() {
           <span className="text-on-surface-variant">Email: </span>
           <span className="font-medium text-primary">{email || "—"}</span>
         </p>
-        {session && (
-          <p className="mt-2 text-xs text-on-surface-variant">Provider: Google (Auth.js)</p>
+        {user && (
+          <p className="mt-2 text-xs text-on-surface-variant">Provider: Google (Supabase Auth)</p>
         )}
         <label className="mt-6 flex cursor-pointer items-start gap-2 text-sm text-on-surface-variant">
           <input type="checkbox" defaultChecked className="hairline mt-0.5 border-outline-variant" />

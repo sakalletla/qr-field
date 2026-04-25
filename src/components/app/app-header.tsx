@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useAppAuth } from "@/components/providers/app-providers";
 import { clearDemoSessionCookie } from "@/lib/demo-session";
 import { MaterialIcon } from "@/components/stitch/material-icon";
 
 export function AppHeader() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const user = useAppAuth();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -34,8 +35,11 @@ export function AppHeader() {
   async function onSignOut() {
     setOpen(false);
     clearDemoSessionCookie();
-    if (session) {
-      await signOut({ callbackUrl: "/" });
+    if (user) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
     } else {
       router.push("/");
       router.refresh();

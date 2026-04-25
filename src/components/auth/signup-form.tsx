@@ -11,7 +11,7 @@ export function SignupForm() {
       </p>
 
       <div className="mt-8">
-        <GoogleSignInButton label="Continue with Google" callbackUrl="/dashboard" />
+        <GoogleSignInButton label="Continue with Google" callbackPath="/dashboard" />
       </div>
       <p className="mt-4 text-center text-xs leading-relaxed text-on-surface-variant">
         By continuing, you agree to our{" "}

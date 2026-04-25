@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { auth } from "@/auth";
+import { getOptionalUser } from "@/lib/supabase/server";
 import { AppProviders } from "@/components/providers/app-providers";
 import "./globals.css";
 
@@ -22,12 +22,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const user = await getOptionalUser();
 
   return (
     <html lang="en" className={`${inter.variable} ${inter.className} h-full antialiased`}>
       <body className="min-h-dvh font-sans">
-        <AppProviders session={session}>{children}</AppProviders>
+        <AppProviders initialUser={user}>{children}</AppProviders>
       </body>
     </html>
   );
